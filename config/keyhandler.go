@@ -91,7 +91,7 @@ func Decode(value string) uint64 {
 	for position, character := range []byte (value) {
 		var characterValue uint64 = characterValues[character]
 		var power = len(value) - 1 - position
-		decodedValue += math.Float64bits(float64(characterValue) * math.Pow(float64(len(alphabet)), float64(power)))
+		decodedValue += uint64(float64(characterValue) * math.Pow(float64(len(alphabet)), float64(power)))
 	}
 	return decodedValue
 }

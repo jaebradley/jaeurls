@@ -12,6 +12,7 @@ import (
 func StartRouter(session *mgo.Session) {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/v1/", createUrl(session)).Methods("POST")
+	r.HandleFunc("/api/v1/{jae[a-zA-Z0-9]+}", redirectUrl(session)).Methods("GET")
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe(":8000", r))
 }
@@ -47,7 +48,27 @@ func createUrl(session *mgo.Session) func(w http.ResponseWriter, r *http.Request
 		if e != nil {
 			http.Error(w, "Unable to insert URL", 500)
 		}
-		
-		json.NewEncoder(w).Encode(CreatedUrlData{Url: CreateUrl(key).String()})
+
+		cu := CreateUrl(key)
+
+		json.NewEncoder(w).Encode(CreatedUrlData{Url: cu.String()})
+	}
+}
+
+func redirectUrl(session *mgo.Session) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		key, e := ParseUrl(*r.URL)
+
+		if e != nil {
+			http.Error(w, e.Error(), 400)
+		}
+
+		u, e := IdentifyUrl(session, key)
+
+		if e != nil {
+			http.Error(w, "unable to identify URL", 400)
+		}
+
+		http.Redirect(w, r, u.String(), 301)
 	}
 }

@@ -54,3 +54,20 @@ func insertUrl(s *mgo.Session, id uint64, u url.URL) error {
 
 	return e
 }
+
+func getUrl(s *mgo.Session, id uint64) (url.URL, error) {
+	var ku keyedUrl
+
+	session := s.Copy()
+	defer session.Close()
+
+	c := session.DB("test").C("urls")
+
+	e := c.FindId(id).One(&ku)
+
+	if e != nil {
+		log.Println("Failed to get url", e)
+	}
+
+	return ku.Url, e
+}

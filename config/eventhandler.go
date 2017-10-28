@@ -22,3 +22,7 @@ func InsertUrl(session *mgo.Session, url url.URL) (string, error) {
 
 	return encodedKey, e
 }
+
+func IdentifyUrl(session *mgo.Session, key string) (url.URL, error) {
+	return getUrl(session, Decode(key))
+}
