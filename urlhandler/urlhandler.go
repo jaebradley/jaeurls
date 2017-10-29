@@ -18,7 +18,7 @@ func CreateUrl(key string) url.URL {
 func ParseUrl(u url.URL) (string, error) {
 	var key string
 	var path = "/" + os.Getenv("PREFIX")
-	if isValidUrl(u) {
+	if strings.HasPrefix(u.Path, path) {
 		i := strings.Index(u.Path, path)
 		if i < 0 {
 			return key, errors.New("unable to identify key")
@@ -27,9 +27,4 @@ func ParseUrl(u url.URL) (string, error) {
 	}
 
 	return key, errors.New("invalid URL")
-}
-
-func isValidUrl(u url.URL) bool {
-	var path = "/" + os.Getenv("PREFIX")
-	return strings.HasPrefix(u.Path, path)
 }

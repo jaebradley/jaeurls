@@ -12,16 +12,16 @@ func InsertUrl(session *mgo.Session, url url.URL) (string, error) {
 	k, err := store.GetUpdatedUrlKey(session)
 
 	if err != nil {
-		panic(err)
+		return encodedKey, err
 	}
 
-	e := store.InsertUrl(session, k, url)
+	err = store.InsertUrl(session, k, url)
 
-	if e == nil {
+	if err == nil {
 		encodedKey = keyhandler.Encode(k)
 	}
 
-	return encodedKey, e
+	return encodedKey, err
 }
 
 func IdentifyUrl(session *mgo.Session, k string) (url.URL, error) {
