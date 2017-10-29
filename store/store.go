@@ -1,36 +1,36 @@
-package config
+package store
 
 import (
 	"gopkg.in/mgo.v2"
-	"log"
 	"net/url"
 	"gopkg.in/mgo.v2/bson"
+	"os"
 )
 
 func CreateStore() *mgo.Session {
-	session, err := mgo.Dial("mongodb://localhost")
+	session, err := mgo.Dial(os.Getenv("MONGODB_URL"))
 	if err != nil {
 		panic(err)
 	}
 	return session
 }
 
-type urlKey struct {
+type UrlKey struct {
 	Id string		`json:"id" bson:"_id"`
 	Key uint64		`json:"key" bson:"key"`
 }
 
-type keyedUrl struct {
+type KeyedUrl struct {
 	Id uint64		`json:"id" bson:"_id"`
 	Url url.URL		`json:"url" bson:"url"`
 }
 
-func getUpdatedUrlKey(s *mgo.Session) (uint64, error) {
+func GetUpdatedUrlKey(s *mgo.Session) (uint64, error) {
 	session := s.Copy()
 	defer session.Close()
 
-	var currentUrlKey urlKey
-	c := session.DB("test").C("id")
+	var currentUrlKey UrlKey
+	c := session.DB(os.Getenv("DATABASE_NAME")).C(os.Getenv("ID_COLLECTION_NAME"))
 	change := mgo.Change{
 		Update: bson.M{"$inc": bson.M{"key": 1}},
 		Upsert: true,
@@ -40,34 +40,26 @@ func getUpdatedUrlKey(s *mgo.Session) (uint64, error) {
 	return currentUrlKey.Key, err
 }
 
-func insertUrl(s *mgo.Session, id uint64, u url.URL) error {
+func InsertUrl(s *mgo.Session, id uint64, u url.URL) error {
 	session := s.Copy()
 	defer session.Close()
 
-	c := session.DB("test").C("urls")
+	c := session.DB(os.Getenv("DATABASE_NAME")).C(os.Getenv("URLS_COLLECTION_NAME"))
 
-	e := c.Insert(keyedUrl{Id: id, Url: u})
-
-	if e != nil {
-		log.Println("Failed to insert url", e)
-	}
+	e := c.Insert(KeyedUrl{Id: id, Url: u})
 
 	return e
 }
 
-func getUrl(s *mgo.Session, id uint64) (url.URL, error) {
-	var ku keyedUrl
+func GetUrl(s *mgo.Session, id uint64) (url.URL, error) {
+	var ku KeyedUrl
 
 	session := s.Copy()
 	defer session.Close()
 
-	c := session.DB("test").C("urls")
+	c := session.DB(os.Getenv("DATABASE_NAME")).C(os.Getenv("URLS_COLLECTION_NAME"))
 
 	e := c.FindId(id).One(&ku)
-
-	if e != nil {
-		log.Println("Failed to get url", e)
-	}
 
 	return ku.Url, e
 }

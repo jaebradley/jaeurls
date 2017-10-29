@@ -1,4 +1,4 @@
-package config
+package router
 
 import (
 	"github.com/gorilla/mux"
@@ -7,14 +7,17 @@ import (
 	"gopkg.in/mgo.v2"
 	"encoding/json"
 	"net/url"
+	"os"
+	"github.com/jaebradley/jaeurls/eventhandler"
+	"github.com/jaebradley/jaeurls/urlhandler"
 )
 
 func StartRouter(session *mgo.Session) {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/v1/", createUrl(session)).Methods("POST")
-	r.HandleFunc("/api/v1/{jae[a-zA-Z0-9]+}", redirectUrl(session)).Methods("GET")
+	r.HandleFunc("/{" + os.Getenv("PREFIX") + "[a-zA-Z0-9]+}", redirectUrl(session)).Methods("GET")
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(":8000", r))
+	log.Fatal(http.ListenAndServe(":" + os.Getenv("PORT"), r))
 }
 
 type CreateUrlData struct {
@@ -34,22 +37,23 @@ func createUrl(session *mgo.Session) func(w http.ResponseWriter, r *http.Request
 		}
 		err := json.NewDecoder(r.Body).Decode(&data)
 		if err != nil {
-			http.Error(w, err.Error(), 400)
+			http.Error(w, "Cannot decode JSON", 400)
 			return
 		}
 
 		u, err := url.Parse(data.Url)
 		if err != nil {
 			http.Error(w, "Invalid URL", 400)
+			return
 		}
 
-		key, e := InsertUrl(session, *u)
+		key, e := eventhandler.InsertUrl(session, *u)
 
 		if e != nil {
 			http.Error(w, "Unable to insert URL", 500)
 		}
 
-		cu := CreateUrl(key)
+		cu := urlhandler.CreateUrl(key)
 
 		json.NewEncoder(w).Encode(CreatedUrlData{Url: cu.String()})
 	}
@@ -57,18 +61,20 @@ func createUrl(session *mgo.Session) func(w http.ResponseWriter, r *http.Request
 
 func redirectUrl(session *mgo.Session) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		key, e := ParseUrl(*r.URL)
+		key, e := urlhandler.ParseUrl(*r.URL)
 
 		if e != nil {
 			http.Error(w, e.Error(), 400)
+			return
 		}
 
-		u, e := IdentifyUrl(session, key)
+		u, e := eventhandler.IdentifyUrl(session, key)
 
 		if e != nil {
-			http.Error(w, "unable to identify URL", 400)
+			http.Error(w, "Unable to identify URL", 404)
+			return
 		}
 
-		http.Redirect(w, r, u.String(), 301)
+		http.Redirect(w, r, u.String(), 302)
 	}
 }

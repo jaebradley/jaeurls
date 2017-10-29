@@ -1,4 +1,4 @@
-package config
+package keyhandler
 
 import (
 	"bytes"
@@ -79,7 +79,7 @@ var characterValues = map[byte]uint64{
 func Encode(value uint64) string {
 	var buffer bytes.Buffer
 	for value > 0 {
-		var character byte = alphabet[calculateIndex(value)]
+		var character = alphabet[calculateIndex(value)]
 		value = uint64(math.Floor(float64(value) / float64(len(alphabet))))
 		buffer.WriteByte(character)
 	}
@@ -89,7 +89,7 @@ func Encode(value uint64) string {
 func Decode(value string) uint64 {
 	var decodedValue uint64 = 0
 	for position, character := range []byte (value) {
-		var characterValue uint64 = characterValues[character]
+		var characterValue = characterValues[character]
 		var power = len(value) - 1 - position
 		decodedValue += uint64(float64(characterValue) * math.Pow(float64(len(alphabet)), float64(power)))
 	}
@@ -97,6 +97,6 @@ func Decode(value string) uint64 {
 }
 
 func calculateIndex(value uint64) uint64 {
-	var remainder float64 = math.Mod(float64(value), float64(len(alphabet)))
+	var remainder = math.Mod(float64(value), float64(len(alphabet)))
 	return uint64(math.Abs(remainder))
 }
