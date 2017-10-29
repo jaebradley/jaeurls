@@ -17,5 +17,3 @@
 persistence/*
 
 .env
-
-vendor/
