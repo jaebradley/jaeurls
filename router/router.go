@@ -10,6 +10,7 @@ import (
 	"os"
 	"github.com/jaebradley/jaeurls/eventhandler"
 	"github.com/jaebradley/jaeurls/urlhandler"
+	"github.com/rs/cors"
 )
 
 func StartRouter(session *mgo.Session) {
@@ -17,7 +18,14 @@ func StartRouter(session *mgo.Session) {
 	r.HandleFunc("/api/v1/", createUrl(session)).Methods("POST")
 	r.HandleFunc("/{" + os.Getenv("PREFIX") + "[a-zA-Z0-9]+}", redirectUrl(session)).Methods("GET")
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(":" + os.Getenv("PORT"), r))
+
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost*"},
+	})
+
+	handler := c.Handler(r)
+
+	log.Fatal(http.ListenAndServe(":" + os.Getenv("PORT"), handler))
 }
 
 type CreateUrlData struct {
