@@ -20,7 +20,7 @@ func StartRouter(session *mgo.Session) {
 	http.Handle("/", r)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost*", "https://jaebradley.github.io/jaeurls-presentation*"},
+		AllowedOrigins: []string{"http://localhost*", "https://jaebradley.github.io*"},
 	})
 
 	handler := c.Handler(r)
